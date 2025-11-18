@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>WebGIS – Catastro de Inundaciones</title>
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+        .header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-family: Arial;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <b>WebGIS – Catastro Comunitario de Inundaciones</b>
+</div>
+
+<div id="map"></div>
+
+<script>
+// Inicializar mapa centrado en Los Ángeles, Biobío
+var map = L.map('map').setView([-37.4693, -72.3537], 13);
+
+// Capa base OSM
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+// Función para agregar marcador al hacer clic
+map.on('click', function(e) {
+    var lat = e.latlng.lat.toFixed(6);
+    var lon = e.latlng.lng.toFixed(6);
+
+    L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup(
+          "<b>Nuevo reporte</b><br>" +
+          "Coordenadas:<br>" + lat + ", " + lon + "<br><br>" +
+          "<a target='_blank' href='TU_LINK_DE_FICHA'>Completar Ficha Catastral</a>"
+        )
+        .openPopup();
+});
+</script>
+
+</body>
+</html>
