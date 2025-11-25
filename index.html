@@ -252,22 +252,38 @@
                 var p = feature.properties || {};
                 var html = "";
 
-                // Título
-                html += "<b>" + (p.tipolugar || "Reporte de inundación") + "</b><br>";
+                // Título: usamos el tipo de lugar afectado si existe
+                var titulo = p["Tipo de lugar afectado"] || "Reporte de inundación";
+                html += "<b>" + titulo + "</b><br>";
 
-                // Campos básicos
-                if (p.direccion)   html += "<b>Dirección:</b> " + p.direccion + "<br>";
-                if (p.alturaagua)  html += "<b>Altura agua:</b> " + p.alturaagua + "<br>";
-                if (p.extension)   html += "<b>Extensión:</b> " + p.extension + "<br>";
-                if (p.duracion)    html += "<b>Duración:</b> " + p.duracion + "<br>";
-
-                // Listas (pueden venir como texto o array según exporte Kobo)
-                if (p.causas)      html += "<b>Causas:</b> " + p.causas + "<br>";
-                if (p.danos)       html += "<b>Daños:</b> " + p.danos + "<br>";
-                if (p.vulnerables) html += "<b>Vulnerables:</b> " + p.vulnerables + "<br>";
-
-                // Comentarios
-                if (p.comentarios) html += "<br><i>" + p.comentarios + "</i>";
+                // Campos descriptivos según las claves reales de Kobo
+                if (p["Dirección"]) {
+                    html += "<b>Dirección:</b> " + p["Dirección"] + "<br>";
+                }
+                if (p["Altura aproximada del agua"]) {
+                    html += "<b>Altura agua:</b> " + p["Altura aproximada del agua"] + "<br>";
+                }
+                if (p["Extensión del área inundada"]) {
+                    html += "<b>Extensión:</b> " + p["Extensión del área inundada"] + "<br>";
+                }
+                if (p["Duración aproximada de la inundación"]) {
+                    html += "<b>Duración:</b> " + p["Duración aproximada de la inundación"] + "<br>";
+                }
+                if (p["Causas observadas"]) {
+                    html += "<b>Causas:</b> " + p["Causas observadas"] + "<br>";
+                }
+                if (p["Daños visibles"]) {
+                    html += "<b>Daños:</b> " + p["Daños visibles"] + "<br>";
+                }
+                if (p["Personas vulnerables afectadas"]) {
+                    html += "<b>Vulnerables:</b> " + p["Personas vulnerables afectadas"] + "<br>";
+                }
+                if (p["Comentario adicional"]) {
+                    html += "<br><i>" + p["Comentario adicional"] + "</i>";
+                }
+                if (p["Imagen"]) {
+                    html += "<br><b>Imagen:</b> " + p["Imagen"];
+                }
 
                 layer.bindPopup(html);
             }
