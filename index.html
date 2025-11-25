@@ -109,7 +109,6 @@
 <body>
 
 <div id="container">
-    <!-- PANEL LATERAL CON FORMULARIO -->
     <div id="sidebar">
         <h2>Formulario de Inundaciones</h2>
 
@@ -212,7 +211,6 @@
         <p class="small">Los reportes locales se guardan como GeoJSON en la consola (F12 → Console)</p>
     </div>
 
-    <!-- MAPA -->
     <div id="map"></div>
 </div>
 
@@ -233,34 +231,33 @@
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
     fetch('data/inundaciones_kobo.geojson')
-      .then(r => {
-          if (!r.ok) throw new Error("No se pudo cargar el GeoJSON");
-          return r.json();
-      })
-      .then(geojsonData => {
+        .then(resp => {
+            if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
+            return resp.json();
+        })
+        .then(geojson => {
 
-          function onEachFeature(feature, layer) {
-              var p = feature.properties || {};
-              var html = "<b>" + (p.tipolugar || "Reporte de inundación") + "</b><br>";
+            function onEachFeature(feature, layer) {
+                var p = feature.properties || {};
+                var html = "<b>" + (p.tipolugar || "Reporte de Inundación") + "</b><br>";
 
-              if (p.direccion) html += "Dirección: " + p.direccion + "<br>";
-              if (p.alturaagua) html += "Altura agua: " + p.alturaagua + "<br>";
-              if (p.extension) html += "Extensión: " + p.extension + "<br>";
-              if (p.duracion) html += "Duración: " + p.duracion + "<br>";
-              if (p.causas) html += "Causas: " + p.causas + "<br>";
-              if (p.danos) html += "Daños: " + p.danos + "<br>";
-              if (p.vulnerables) html += "Vulnerables: " + p.vulnerables + "<br>";
-              if (p.comentarios) html += "<i>" + p.comentarios + "</i>";
+                if (p.direccion) html += "Dirección: " + p.direccion + "<br>";
+                if (p.alturaagua) html += "Altura agua: " + p.alturaagua + "<br>";
+                if (p.extension)  html += "Extensión: " + p.extension + "<br>";
+                if (p.duracion)   html += "Duración: " + p.duracion + "<br>";
+                if (p.causas)     html += "Causas: " + p.causas + "<br>";
+                if (p.danos)      html += "Daños: " + p.danos + "<br>";
+                if (p.vulnerables)html += "Vulnerables: " + p.vulnerables + "<br>";
+                if (p.comentarios)html += "<i>" + p.comentarios + "</i>";
 
-              layer.bindPopup(html);
-          }
+                layer.bindPopup(html);
+            }
 
-          L.geoJSON(geojsonData, { onEachFeature: onEachFeature }).addTo(map);
+            L.geoJSON(geojson, { onEachFeature }).addTo(map);
 
-          console.log("Datos de Kobo cargados:", geojsonData);
-      })
-      .catch(err => console.error("Error cargando datos de Kobo:", err));
-
+            console.log("Datos de Kobo cargados:", geojson);
+        })
+        .catch(err => console.error("Error cargando datos de Kobo:", err));
 
     // ============================
     // FORMULARIO DEMO LOCAL
@@ -273,26 +270,27 @@
     document.getElementById('form-reporte').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        var lat = parseFloat(lat.value);
-        var lon = parseFloat(lon.value);
-        if (isNaN(lat)) return alert("Haz clic en el mapa.");
+        let lat = parseFloat(document.getElementById('lat').value);
+        let lon = parseFloat(document.getElementById('lon').value);
 
-        var direccion = direccion.value.trim();
-        var tipolugar = tipolugar.value;
-        var alturaagua = alturaagua.value;
-        var extension = extension.value;
-        var duracion = duracion.value;
-        var comentarios = comentarios.value.trim();
+        if (isNaN(lat) || isNaN(lon)) return alert("Haz clic en el mapa para definir ubicación.");
+
+        let direccion = document.getElementById('direccion').value.trim();
+        let tipolugar = document.getElementById('tipolugar').value;
+        let alturaagua = document.getElementById('alturaagua').value;
+        let extension = document.getElementById('extension').value;
+        let duracion = document.getElementById('duracion').value;
+        let comentarios = document.getElementById('comentarios').value.trim();
 
         function getChecked(name) {
             return [...document.querySelectorAll('input[name="'+name+'"]:checked')].map(x=>x.value);
         }
 
-        var causas = getChecked("causas");
-        var danos = getChecked("danos");
-        var vulnerables = getChecked("vulnerables");
+        let causas = getChecked("causas");
+        let danos = getChecked("danos");
+        let vulnerables = getChecked("vulnerables");
 
-        var popupHtml =
+        let popupHtml =
             "<b>"+tipolugar+"</b><br>" +
             lat+", "+lon+"<br>" +
             (direccion?("Dirección: "+direccion+"<br>"):"") +
@@ -305,14 +303,6 @@
             (comentarios? "<br><i>"+comentarios+"</i>":"" );
 
         L.marker([lat,lon]).addTo(map).bindPopup(popupHtml);
-
-        reportes.push({
-            type:"Feature",
-            geometry:{ type:"Point", coordinates:[lon,lat] },
-            properties:{ direccion, tipolugar, alturaagua, extension, duracion, causas, danos, vulnerables, comentarios }
-        });
-
-        console.log("GeoJSON completo:", JSON.stringify({type:"FeatureCollection", features:reportes}, null, 2));
     });
 </script>
 
