@@ -1,0 +1,9 @@
+[
+{
+"type": "FeatureCollection",
+"name": "WebGIS",
+"features": [
+{"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.345609, -37.472199, 165.70001220703125]}, "properties": {"start": "2025-11-25T15:01:11.597-03:00", "end": "2025-11-25T15:02:00.729-03:00", "Direcci\u00f3n": "Mi casa 123", "Tipo de lugar afectado": "Escuela", "Altura aproximada del agua": "M\u00e1s de 1 m", "Extensi\u00f3n del \u00e1rea inundada": "10 - 50 m2", "Duraci\u00f3n aproximada de la inundaci\u00f3n": "30 min - 2 h", "Causas observadas": "Drenaje insuficiente Basura o taponamiento", "Da\u00f1os visibles": "Viviendas afectadas Servicios interrumpidos Interrupci\u00f3n del tr\u00e1nsito", "Personas vulnerables afectadas": "Ni\u00f1os Personas con discapacidad", "Comentario adicional": "Si", "Imagen": "ae9ce4uadcvf1-15_1_58.jpeg", "_id": 614855909, "_uuid": "797fdb10-49fd-4994-8422-31e4389522a4", "_submission_time": "2025-11-25T18:02:02", "_status": "submitted_via_web", "__version__": "vsuQRjGrE3TmgQJEdUDTur", "_index": 1}}
+]
+}
+]
