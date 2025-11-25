@@ -278,6 +278,44 @@
         document.getElementById('lon').value = lon;
     });
 
+    // ===============================
+// Cargar datos exportados desde Kobo (GeoJSON)
+// ===============================
+fetch('data/inundaciones_kobo.geojson')
+  .then(function(response) {
+      if (!response.ok) {
+          throw new Error('No se pudo cargar el archivo GeoJSON de Kobo');
+      }
+      return response.json();
+  })
+  .then(function(geojsonData) {
+
+      function onEachFeature(feature, layer) {
+          var p = feature.properties || {};
+          var html = "<b>" + (p.tipolugar || "Reporte de inundación") + "</b><br>";
+
+          if (p.direccion)   html += "Dirección: " + p.direccion + "<br>";
+          if (p.alturaagua)  html += "Altura agua: " + p.alturaagua + "<br>";
+          if (p.extension)   html += "Extensión: " + p.extension + "<br>";
+          if (p.duracion)    html += "Duración: " + p.duracion + "<br>";
+          if (p.causas)      html += "Causas: " + p.causas + "<br>";
+          if (p.danos)       html += "Daños: " + p.danos + "<br>";
+          if (p.vulnerables) html += "Vulnerables: " + p.vulnerables + "<br>";
+          if (p.comentarios) html += "<br><i>" + p.comentarios + "</i>";
+
+          layer.bindPopup(html);
+      }
+
+      L.geoJSON(geojsonData, {
+          onEachFeature: onEachFeature
+      }).addTo(map);
+
+      console.log("Datos de Kobo cargados:", geojsonData);
+  })
+  .catch(function(error) {
+      console.error("Error cargando datos de Kobo:", error);
+  });
+
     // Manejar el envío del formulario
     document.getElementById('form-reporte').addEventListener('submit', function(e) {
         e.preventDefault();
