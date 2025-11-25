@@ -137,7 +137,7 @@
             <div class="coords-info">Coordenadas generadas automáticamente al hacer clic en el mapa.</div>
 
             <label for="direccion">Dirección o referencia</label>
-            <input type="text" id="direccion" name="direccion">
+            <input type="text" id="direccion" name="direccion" placeholder="Ej: Av. Las Industrias con ...">
 
             <label for="tipolugar">Tipo de lugar afectado</label>
             <select id="tipolugar" name="tipolugar">
@@ -154,61 +154,72 @@
             <label for="alturaagua">Altura aproximada del agua</label>
             <select id="alturaagua" name="alturaagua">
                 <option value="">Selecciona una opción</option>
-                <option value="0–10 cm">0–10 cm</option>
-                <option value="10–30 cm">10–30 cm</option>
-                <option value="30–60 cm">30–60 cm</option>
+                <option value="0–10 cm">0–10 cm (encharcamiento)</option>
+                <option value="10–30 cm">10–30 cm (cubre vereda)</option>
+                <option value="30–60 cm">30–60 cm (entra a viviendas)</option>
                 <option value="60–100 cm">60–100 cm</option>
-                <option value=">1 m">Más de 1 m</option>
+                <option value=">1 m">Más de 1 metro</option>
             </select>
 
             <label for="extension">Extensión del área inundada</label>
             <select id="extension" name="extension">
                 <option value="">Selecciona una opción</option>
-                <option value="<10 m²">&lt;10 m²</option>
+                <option value="<10 m²">&lt; 10 m²</option>
                 <option value="10–50 m²">10–50 m²</option>
                 <option value="50–200 m²">50–200 m²</option>
-                <option value=">200 m²">&gt;200 m²</option>
+                <option value=">200 m²">&gt; 200 m²</option>
             </select>
 
-            <label for="duracion">Duración aproximada</label>
+            <label for="duracion">Duración aproximada de la inundación</label>
             <select id="duracion" name="duracion">
                 <option value="">Selecciona una opción</option>
-                <option value="<30 min">&lt;30 min</option>
+                <option value="<30 min">&lt; 30 minutos</option>
                 <option value="30 min – 2 h">30 min – 2 h</option>
                 <option value="2–6 h">2–6 h</option>
-                <option value=">6 h">&gt;6 h</option>
+                <option value=">6 h">&gt; 6 h</option>
             </select>
 
-            <label>Causas observadas</label>
+            <label>Causas observadas (puedes marcar varias)</label>
             <div class="checkbox-group">
                 <label><input type="checkbox" name="causas" value="Lluvia intensa">Lluvia intensa</label>
-                <label><input type="checkbox" name="causas" value="Colapso de alcantarillado">Colapso alcantarillado</label>
+                <label><input type="checkbox" name="causas" value="Colapso de alcantarillado">Colapso de alcantarillado</label>
                 <label><input type="checkbox" name="causas" value="Drenaje insuficiente">Drenaje insuficiente</label>
-                <label><input type="checkbox" name="causas" value="Desborde de canal">Desborde de canal</label>
-                <label><input type="checkbox" name="causas" value="Basura / taponamiento">Basura/taponamiento</label>
+                <label><input type="checkbox" name="causas" value="Desborde de canal o estero">Desborde de canal o estero</label>
+                <label><input type="checkbox" name="causas" value="Basura / taponamiento">Basura / taponamiento</label>
+                <label><input type="checkbox" name="causas" value="Pendiente del terreno">Pendiente del terreno</label>
+                <label><input type="checkbox" name="causas" value="No sabe">No sabe</label>
             </div>
 
-            <label>Daños visibles</label>
+            <label>Daños visibles (puedes marcar varias)</label>
             <div class="checkbox-group">
                 <label><input type="checkbox" name="danos" value="Calles anegadas">Calles anegadas</label>
+                <label><input type="checkbox" name="danos" value="Vehículos atrapados">Vehículos atrapados</label>
                 <label><input type="checkbox" name="danos" value="Viviendas afectadas">Viviendas afectadas</label>
-                <label><input type="checkbox" name="danos" value="Interrupción del tránsito">Interrupción tránsito</label>
+                <label><input type="checkbox" name="danos" value="Comercio afectado">Comercio afectado</label>
+                <label><input type="checkbox" name="danos" value="Servicios interrumpidos">Servicios interrumpidos</label>
+                <label><input type="checkbox" name="danos" value="Interrupción del tránsito">Interrupción del tránsito</label>
+                <label><input type="checkbox" name="danos" value="Infraestructura crítica dañada">Infraestructura crítica dañada</label>
             </div>
 
-            <label>Personas vulnerables</label>
+            <label>Personas vulnerables afectadas (si corresponde)</label>
             <div class="checkbox-group">
                 <label><input type="checkbox" name="vulnerables" value="Adultos mayores">Adultos mayores</label>
                 <label><input type="checkbox" name="vulnerables" value="Niños">Niños</label>
-                <label><input type="checkbox" name="vulnerables" value="Personas con discapacidad">Discapacidad</label>
+                <label><input type="checkbox" name="vulnerables" value="Personas con discapacidad">Personas con discapacidad</label>
+                <label><input type="checkbox" name="vulnerables" value="No aplica">No aplica</label>
+                <label><input type="checkbox" name="vulnerables" value="No sabe">No sabe</label>
             </div>
 
-            <label for="comentarios">Comentarios</label>
-            <textarea id="comentarios" name="comentarios"></textarea>
+            <label for="comentarios">Comentarios adicionales</label>
+            <textarea id="comentarios" name="comentarios" placeholder="Describe detalles relevantes del evento..."></textarea>
 
             <button type="submit">Agregar al mapa</button>
         </form>
 
-        <p class="small">Los reportes locales se guardan como GeoJSON en la consola (F12 → Console)</p>
+        <p class="small">
+            Los reportes también se guardan como una lista GeoJSON en la consola del navegador
+            (F12 → Console), por si quieres exportarlos.
+        </p>
     </div>
 
     <div id="map"></div>
@@ -231,33 +242,43 @@
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
     fetch('data/inundaciones_kobo.geojson')
-        .then(resp => {
+        .then(function(resp) {
             if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
             return resp.json();
         })
-        .then(geojson => {
+        .then(function(geojson) {
 
             function onEachFeature(feature, layer) {
                 var p = feature.properties || {};
-                var html = "<b>" + (p.tipolugar || "Reporte de Inundación") + "</b><br>";
+                var html = "";
 
-                if (p.direccion) html += "Dirección: " + p.direccion + "<br>";
-                if (p.alturaagua) html += "Altura agua: " + p.alturaagua + "<br>";
-                if (p.extension)  html += "Extensión: " + p.extension + "<br>";
-                if (p.duracion)   html += "Duración: " + p.duracion + "<br>";
-                if (p.causas)     html += "Causas: " + p.causas + "<br>";
-                if (p.danos)      html += "Daños: " + p.danos + "<br>";
-                if (p.vulnerables)html += "Vulnerables: " + p.vulnerables + "<br>";
-                if (p.comentarios)html += "<i>" + p.comentarios + "</i>";
+                // Título
+                html += "<b>" + (p.tipolugar || "Reporte de inundación") + "</b><br>";
+
+                // Campos básicos
+                if (p.direccion)   html += "<b>Dirección:</b> " + p.direccion + "<br>";
+                if (p.alturaagua)  html += "<b>Altura agua:</b> " + p.alturaagua + "<br>";
+                if (p.extension)   html += "<b>Extensión:</b> " + p.extension + "<br>";
+                if (p.duracion)    html += "<b>Duración:</b> " + p.duracion + "<br>";
+
+                // Listas (pueden venir como texto o array según exporte Kobo)
+                if (p.causas)      html += "<b>Causas:</b> " + p.causas + "<br>";
+                if (p.danos)       html += "<b>Daños:</b> " + p.danos + "<br>";
+                if (p.vulnerables) html += "<b>Vulnerables:</b> " + p.vulnerables + "<br>";
+
+                // Comentarios
+                if (p.comentarios) html += "<br><i>" + p.comentarios + "</i>";
 
                 layer.bindPopup(html);
             }
 
-            L.geoJSON(geojson, { onEachFeature }).addTo(map);
+            L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
 
             console.log("Datos de Kobo cargados:", geojson);
         })
-        .catch(err => console.error("Error cargando datos de Kobo:", err));
+        .catch(function(err) {
+            console.error("Error cargando datos de Kobo:", err);
+        });
 
     // ============================
     // FORMULARIO DEMO LOCAL
@@ -270,39 +291,70 @@
     document.getElementById('form-reporte').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        let lat = parseFloat(document.getElementById('lat').value);
-        let lon = parseFloat(document.getElementById('lon').value);
+        var lat = parseFloat(document.getElementById('lat').value);
+        var lon = parseFloat(document.getElementById('lon').value);
 
-        if (isNaN(lat) || isNaN(lon)) return alert("Haz clic en el mapa para definir ubicación.");
-
-        let direccion = document.getElementById('direccion').value.trim();
-        let tipolugar = document.getElementById('tipolugar').value;
-        let alturaagua = document.getElementById('alturaagua').value;
-        let extension = document.getElementById('extension').value;
-        let duracion = document.getElementById('duracion').value;
-        let comentarios = document.getElementById('comentarios').value.trim();
-
-        function getChecked(name) {
-            return [...document.querySelectorAll('input[name="'+name+'"]:checked')].map(x=>x.value);
+        if (isNaN(lat) || isNaN(lon)) {
+            alert('Primero haz clic en el mapa para definir la ubicación del reporte.');
+            return;
         }
 
-        let causas = getChecked("causas");
-        let danos = getChecked("danos");
-        let vulnerables = getChecked("vulnerables");
+        var direccion    = document.getElementById('direccion').value.trim();
+        var tipolugar    = document.getElementById('tipolugar').value;
+        var alturaagua   = document.getElementById('alturaagua').value;
+        var extension    = document.getElementById('extension').value;
+        var duracion     = document.getElementById('duracion').value;
+        var comentarios  = document.getElementById('comentarios').value.trim();
 
-        let popupHtml =
-            "<b>"+tipolugar+"</b><br>" +
-            lat+", "+lon+"<br>" +
-            (direccion?("Dirección: "+direccion+"<br>"):"") +
-            "Altura: "+alturaagua+"<br>" +
-            "Extensión: "+extension+"<br>" +
-            "Duración: "+duracion+"<br>" +
-            (causas.length? "Causas: "+causas.join(", ")+"<br>":"" ) +
-            (danos.length? "Daños: "+danos.join(", ")+"<br>":"" ) +
-            (vulnerables.length? "Vulnerables: "+vulnerables.join(", ")+"<br>":"" ) +
-            (comentarios? "<br><i>"+comentarios+"</i>":"" );
+        function getCheckedValues(name) {
+            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'))
+                        .map(function(el) { return el.value; });
+        }
 
-        L.marker([lat,lon]).addTo(map).bindPopup(popupHtml);
+        var causas       = getCheckedValues('causas');
+        var danos        = getCheckedValues('danos');
+        var vulnerables  = getCheckedValues('vulnerables');
+
+        var popupHtml = "<b>" + (tipolugar || "Reporte de inundación") + "</b><br>" +
+                        "Coordenadas: " + lat.toFixed(6) + ", " + lon.toFixed(6) + "<br>" +
+                        (direccion ? "<b>Dirección:</b> " + direccion + "<br>" : "") +
+                        "<b>Altura agua:</b> " + alturaagua + "<br>" +
+                        "<b>Extensión:</b> " + extension + "<br>" +
+                        "<b>Duración:</b> " + duracion + "<br>" +
+                        (causas.length ? "<b>Causas:</b> " + causas.join(", ") + "<br>" : "") +
+                        (danos.length ? "<b>Daños:</b> " + danos.join(", ") + "<br>" : "") +
+                        (vulnerables.length ? "<b>Vulnerables:</b> " + vulnerables.join(", ") + "<br>" : "") +
+                        (comentarios ? "<br><i>" + comentarios + "</i>" : "");
+
+        L.marker([lat, lon]).addTo(map).bindPopup(popupHtml);
+
+        var feature = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [lon, lat]
+            },
+            "properties": {
+                "direccion": direccion,
+                "tipolugar": tipolugar,
+                "alturaagua": alturaagua,
+                "extension": extension,
+                "duracion": duracion,
+                "causas": causas,
+                "danos": danos,
+                "vulnerables": vulnerables,
+                "comentarios": comentarios,
+                "timestamp": new Date().toISOString()
+            }
+        };
+
+        reportes.push(feature);
+
+        console.log("Reporte agregado. GeoJSON completo:");
+        console.log(JSON.stringify({
+            "type": "FeatureCollection",
+            "features": reportes
+        }, null, 2));
     });
 </script>
 
