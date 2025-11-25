@@ -105,6 +105,29 @@
             color: #444;
             margin-top: 4px;
         }
+        .note-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffca2c;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #664d03;
+        }
+        .btn-kobo {
+            display:inline-block;
+            padding:8px 10px;
+            margin-bottom:12px;
+            background:#198754;
+            color:white;
+            text-decoration:none;
+            border-radius:4px;
+            font-size:0.85rem;
+            font-weight:600;
+        }
+        .btn-kobo:hover {
+            background:#157347;
+        }
     </style>
 </head>
 
@@ -114,10 +137,22 @@
     <!-- PANEL LATERAL CON FORMULARIO -->
     <div id="sidebar">
         <h2>Formulario de Inundaciones</h2>
+
+        <!-- Nota sobre front end y Kobo -->
+        <div class="note-box">
+            <strong>Nota:</strong> este es el <em>front end</em> de la página; se está trabajando en la conexión con base de datos en KoboToolbox.
+        </div>
+
+        <!-- Botón para abrir formulario oficial en Kobo -->
         <p class="small">
-            1) Haz clic en el mapa para rellenar las coordenadas.<br>
-            2) Completa el formulario.<br>
-            3) Pulsa <b>“Agregar al mapa”</b>.
+            Para registrar un evento real de inundación, utiliza la ficha oficial:
+        </p>
+        <a href="https://ee.kobotoolbox.org/x/hXgY9AsF" target="_blank" class="btn-kobo">
+            Abrir formulario en KoboToolbox
+        </a>
+
+        <p class="small">
+            El formulario siguiente es demostrativo y agrega marcadores solo de forma local en este visor.
         </p>
 
         <form id="form-reporte">
@@ -220,17 +255,6 @@
     
     <!-- MAPA -->
     <div id="map"></div>
-</div>
-<div style="
-    background: #fff3cd;
-    border-left: 4px solid #ffca2c;
-    padding: 10px;
-    margin-bottom: 12px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    color: #664d03;
-">
-    <strong>Nota:</strong> este es el <em>front end</em> de la página; se está trabajando en la conexión con base de datos en KoboToolbox.
 </div>
 
 <script>
@@ -336,4 +360,3 @@
 
 </body>
 </html>
-
