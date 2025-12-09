@@ -23,7 +23,7 @@
             width: 100vw;
         }
         #sidebar {
-            width: 360px;
+            width: 380px;
             max-width: 100%;
             padding: 12px 14px;
             background: #f8f9fa;
@@ -31,7 +31,9 @@
             overflow-y: auto;
         }
         #map { flex: 1; }
+
         h2 { margin-top: 0; font-size: 1.1rem; }
+        h3 { font-size: 1rem; margin-top: 12px; }
         .small { font-size: 0.8rem; color: #555; }
 
         .note-box {
@@ -47,7 +49,7 @@
         .btn-kobo {
             display:inline-block;
             padding:8px 10px;
-            margin-bottom:12px;
+            margin:4px 0 10px 0;
             background:#198754;
             color:white;
             text-decoration:none;
@@ -62,7 +64,7 @@
             margin-top: 6px;
         }
 
-        #chart-container {
+        #chart-container, #chart-tipo-container {
             position: relative;
             width: 100%;
             height: 220px;
@@ -72,6 +74,21 @@
             border-radius: 4px;
             padding: 4px;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 6px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 3px 4px;
+            text-align: left;
+        }
+        th {
+            background: #e9ecef;
+        }
     </style>
 </head>
 
@@ -79,47 +96,65 @@
 
 <div id="container">
     <div id="sidebar">
-        <h2>Catastro colaborativo de inundaciones</h2>
+        <h2>WebGIS – Catastro de Inundaciones</h2>
 
         <div class="note-box">
-            <strong>Nota:</strong> este es el <em>front end</em> del WebGIS. 
-            Los datos provienen del formulario oficial implementado en KoboToolbox.
+            <strong>Nota:</strong> este visor muestra reportes de inundaciones
+            enviados mediante un formulario en <em>KoboToolbox</em>. Los datos se
+            integran como un archivo GeoJSON y se actualizan de manera periódica.
         </div>
 
         <p class="small">
-            Para reportar un evento real de inundación, utiliza el siguiente formulario ciudadano 
-            (KoboToolbox), donde se registran, entre otros:
+            Para registrar un evento real de inundación, utiliza el formulario oficial
+            alojado en KoboToolbox:
         </p>
-        <ul class="small">
-            <li>Dirección o referencia del lugar afectado</li>
-            <li>Tipo de lugar (vivienda, calle, escuela, etc.)</li>
-            <li>Altura aproximada del agua y extensión del área inundada</li>
-            <li>Duración del evento</li>
-            <li>Causas observadas y daños visibles</li>
-            <li>Presencia de personas vulnerables</li>
-            <li>Comentarios adicionales y evidencia fotográfica</li>
-        </ul>
 
         <a href="https://ee.kobotoolbox.org/x/hXgY9AsF" target="_blank" class="btn-kobo">
             Abrir formulario en KoboToolbox
         </a>
 
+        <p class="small">
+            Cada respuesta incluye información sobre tipo de lugar afectado, altura del
+            agua, extensión del área inundada, duración, causas observadas, daños
+            visibles y presencia de personas vulnerables. Estos datos se visualizan en el
+            mapa como puntos georreferenciados y se resumen en tablas y gráficos.
+        </p>
+
         <hr>
 
         <!-- RESUMEN Y GRÁFICOS -->
-        <h3 style="font-size:1rem; margin-top:10px;">Análisis de datos</h3>
+        <h3>Análisis de datos</h3>
         <p class="small">
-            El resumen y el gráfico se generan automáticamente a partir de los reportes 
-            almacenados en KoboToolbox (GeoJSON).
+            El resumen y los gráficos se generan automáticamente a partir de los reportes
+            cargados desde KoboToolbox.
         </p>
 
         <div id="resumen-datos">
-            <em class="small">Aún no hay datos cargados.</em>
+            <em class="small">Cargando datos de inundaciones...</em>
         </div>
 
         <div id="chart-container">
             <canvas id="chart-altura"></canvas>
         </div>
+
+        <div id="chart-tipo-container">
+            <canvas id="chart-tipo"></canvas>
+        </div>
+
+        <h3>Últimos reportes</h3>
+        <table id="tabla-reportes">
+            <thead>
+                <tr>
+                    <th>Tipo de lugar</th>
+                    <th>Altura agua</th>
+                    <th>Duración</th>
+                    <th>Dirección / referencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4"><em>Sin datos aún.</em></td></tr>
+            </tbody>
+        </table>
     </div>
 
     <div id="map"></div>
@@ -136,15 +171,19 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Lista con TODOS los reportes (solo Kobo en esta versión)
+    // Lista con TODOS los reportes
     var todosReportes = [];
-    var chartAltura = null;
 
-    // Función auxiliar para leer propiedades con claves alternativas
-    function extraerProp(feature, keys) {
-        var p = feature.properties || {};
-        for (var i = 0; i < keys.length; i++) {
-            var k = keys[i];
+    // Gráficos (Chart.js)
+    var chartAltura = null;
+    var chartTipo = null;
+
+    // ============================
+    // Funciones auxiliares
+    // ============================
+    function extraerPropPorClaves(p, claves) {
+        for (var i = 0; i < claves.length; i++) {
+            var k = claves[i];
             if (p[k] !== undefined && p[k] !== null && p[k] !== "") {
                 return p[k];
             }
@@ -152,26 +191,24 @@
         return null;
     }
 
-    // Registrar un feature en la lista global
     function registrarFeature(feature) {
         todosReportes.push(feature);
     }
 
-    // Actualizar resumen (listas) + gráfico
     function actualizarResumen() {
         var contTipo = {};
         var contAltura = {};
 
         todosReportes.forEach(function(f) {
-            var tipo = extraerProp(f, [
+            var p = f.properties || {};
+            var tipo = extraerPropPorClaves(p, [
                 "Tipo de lugar afectado",
                 "tipo de lugar afectado",
                 "Tipo de lugar",
                 "tipo_lugar",
                 "tipolugar"
             ]);
-
-            var altura = extraerProp(f, [
+            var altura = extraerPropPorClaves(p, [
                 "Altura aproximada del agua",
                 "alturaagua"
             ]);
@@ -183,6 +220,8 @@
                 contAltura[altura] = (contAltura[altura] || 0) + 1;
             }
         });
+
+        console.log("Total de reportes cargados:", todosReportes.length);
 
         var html = "";
         html += "<p class='small'><b>Total de reportes:</b> " + todosReportes.length + "</p>";
@@ -210,9 +249,10 @@
         document.getElementById("resumen-datos").innerHTML = html;
 
         actualizarChartAltura(contAltura);
+        actualizarChartTipo(contTipo);
+        actualizarTablaReportes();
     }
 
-    // Crear / actualizar gráfico de alturas
     function actualizarChartAltura(contAltura) {
         var ctx = document.getElementById('chart-altura').getContext('2d');
         var labels = Object.keys(contAltura);
@@ -237,7 +277,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'N° de reportes por altura de agua',
+                        label: 'N° de reportes por altura',
                         data: data
                     }]
                 },
@@ -245,20 +285,102 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            ticks: { font: { size: 10 } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 }
-                        }
+                        x: { ticks: { font: { size: 9 } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
                     },
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
+    }
+
+    function actualizarChartTipo(contTipo) {
+        var ctx = document.getElementById('chart-tipo').getContext('2d');
+        var labels = Object.keys(contTipo);
+        var data = labels.map(function(l) { return contTipo[l]; });
+
+        if (!labels.length) {
+            if (chartTipo) {
+                chartTipo.data.labels = [];
+                chartTipo.data.datasets[0].data = [];
+                chartTipo.update();
+            }
+            return;
+        }
+
+        if (chartTipo) {
+            chartTipo.data.labels = labels;
+            chartTipo.data.datasets[0].data = data;
+            chartTipo.update();
+        } else {
+            chartTipo = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'N° de reportes por tipo de lugar',
+                        data: data
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { font: { size: 9 } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    }
+
+    function actualizarTablaReportes() {
+        var tbody = document.querySelector("#tabla-reportes tbody");
+        tbody.innerHTML = "";
+
+        if (!todosReportes.length) {
+            tbody.innerHTML = "<tr><td colspan='4'><em>Sin datos aún.</em></td></tr>";
+            return;
+        }
+
+        // Tomar hasta los últimos 10
+        var ultimos = todosReportes.slice(-10).reverse();
+
+        ultimos.forEach(function(f) {
+            var p = f.properties || {};
+            var tipo = extraerPropPorClaves(p, [
+                "Tipo de lugar afectado",
+                "tipo de lugar afectado",
+                "Tipo de lugar",
+                "tipo_lugar",
+                "tipolugar"
+            ]) || "-";
+
+            var altura = extraerPropPorClaves(p, [
+                "Altura aproximada del agua",
+                "alturaagua"
+            ]) || "-";
+
+            var duracion = extraerPropPorClaves(p, [
+                "Duración aproximada de la inundación",
+                "duracion"
+            ]) || "-";
+
+            var direccion = extraerPropPorClaves(p, [
+                "Dirección",
+                "Dirección o referencia",
+                "direccion"
+            ]) || "-";
+
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+                "<td>" + tipo + "</td>" +
+                "<td>" + altura + "</td>" +
+                "<td>" + duracion + "</td>" +
+                "<td>" + direccion + "</td>";
+            tbody.appendChild(tr);
+        });
     }
 
     // ===============================
@@ -270,60 +392,58 @@
             return resp.json();
         })
         .then(function(geojson) {
-
-            // Si viene envuelto en un array con un solo FeatureCollection (como el ejemplo que me mandaste)
+            // Si viene como [ { FeatureCollection } ]
             if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
                 geojson = geojson[0];
+            }
+
+            if (!geojson || !geojson.features) {
+                console.error("GeoJSON sin 'features':", geojson);
+                document.getElementById("resumen-datos").innerHTML =
+                    "<em class='small'>No se encontraron features en el GeoJSON.</em>";
+                return;
             }
 
             function onEachFeature(feature, layer) {
                 var p = feature.properties || {};
                 var html = "";
 
-                // Título del popup
-                var titulo = p["Tipo de lugar afectado"] ||
-                             p["tipo de lugar afectado"] ||
-                             p["Tipo de lugar"] ||
-                             p["tipo_lugar"] ||
-                             p["tipolugar"] ||
-                             "Reporte de inundación";
+                var titulo = extraerPropPorClaves(p, [
+                    "Tipo de lugar afectado",
+                    "tipo de lugar afectado",
+                    "Tipo de lugar",
+                    "tipo_lugar",
+                    "tipolugar"
+                ]) || "Reporte de inundación";
 
                 html += "<b>" + titulo + "</b><br>";
 
-                // Mostrar todas las propiedades (menos las internas que empiezan con "_")
                 Object.keys(p).forEach(function(key) {
                     if (key.startsWith("_") || key === "__version__") return;
 
                     var valor = p[key];
                     if (valor === null || valor === "" || typeof valor === "undefined") return;
 
-                    // Evitar repetir el título
-                    if (key === "Tipo de lugar afectado" ||
-                        key === "tipo de lugar afectado" ||
-                        key === "Tipo de lugar" ||
-                        key === "tipo_lugar" ||
-                        key === "tipolugar") {
-                        return;
+                    if (["Tipo de lugar afectado","tipo de lugar afectado","Tipo de lugar","tipo_lugar","tipolugar"].includes(key)) {
+                        return; // ya está en el título
                     }
 
                     html += "<b>" + key + ":</b> " + valor + "<br>";
                 });
 
                 layer.bindPopup(html);
-
-                // Registrar este feature para el resumen/gráficos
                 registrarFeature(feature);
             }
 
             L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
 
             console.log("Datos de Kobo cargados:", geojson);
-
-            // Actualizar resumen y gráfico
             actualizarResumen();
         })
         .catch(function(err) {
             console.error("Error cargando datos de Kobo:", err);
+            document.getElementById("resumen-datos").innerHTML =
+                "<em class='small'>Error al cargar el GeoJSON de Kobo.</em>";
         });
 </script>
 
