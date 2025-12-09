@@ -117,7 +117,7 @@
             Cada respuesta incluye información sobre tipo de lugar afectado, altura del
             agua, extensión del área inundada, duración, causas observadas, daños
             visibles y presencia de personas vulnerables. Estos datos se visualizan en el
-            mapa como puntos georreferenciados y se resumen en tablas y gráficos.
+            mapa como entidades georreferenciadas y se resumen en tablas y gráficos.
         </p>
 
         <hr>
@@ -171,13 +171,8 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // ===================================
-    // ESTRUCTURAS PARA REPORTES ÚNICOS
-    // ===================================
-    // Diccionario id_reporte -> propiedades
-    var reportesPorId = {};
-    // Lista para mantener el orden de llegada de los ids
-    var ordenReportes = [];
+    // Lista con TODOS los reportes (cada feature: punto o polígono)
+    var todosReportes = [];
 
     // Gráficos (Chart.js)
     var chartAltura = null;
@@ -186,8 +181,6 @@
     // ============================
     // Funciones auxiliares
     // ============================
-
-    // Busca un valor en el objeto p probando varias claves posibles
     function extraerPropPorClaves(p, claves) {
         for (var i = 0; i < claves.length; i++) {
             var k = claves[i];
@@ -198,56 +191,16 @@
         return null;
     }
 
-    // Obtener un ID único de reporte a partir de las propiedades
-    function obtenerIdReporte(p, feature) {
-        // Preferimos _uuid, luego _id, luego start
-        if (p["_uuid"]) return p["_uuid"];
-        if (p["_id"]) return String(p["_id"]);
-        if (p["start"]) return p["start"];
-
-        // Fallback: algo basado en la geometría (no es perfecto, pero sirve)
-        if (feature && feature.geometry && feature.geometry.type === "Point") {
-            return "pt_" + feature.geometry.coordinates.join(",");
-        }
-        // Último recurso: id aleatorio (solo si no hay nada más)
-        return "anon_" + Math.random().toString(36).substring(2, 9);
-    }
-
-    // Registrar un feature, pero guardando UN solo registro por id de reporte
     function registrarFeature(feature) {
-        var p = feature.properties || {};
-        var id = obtenerIdReporte(p, feature);
-
-        if (!reportesPorId[id]) {
-            // Primer vez que vemos este id -> lo agregamos al orden
-            ordenReportes.push(id);
-        }
-        // Guardamos / actualizamos las propiedades asociadas a ese id
-        reportesPorId[id] = p;
+        todosReportes.push(feature);
     }
 
-    // Construye un array con todas las propiedades únicas (un elemento por reporte)
-    function obtenerListaReportes() {
-        var lista = [];
-        for (var i = 0; i < ordenReportes.length; i++) {
-            var id = ordenReportes[i];
-            if (reportesPorId[id]) {
-                lista.push(reportesPorId[id]);
-            }
-        }
-        return lista;
-    }
-
-    // ============================
-    // Actualización de resumen / gráficos / tabla
-    // ============================
     function actualizarResumen() {
-        var todos = obtenerListaReportes();
-
         var contTipo = {};
         var contAltura = {};
 
-        todos.forEach(function(p) {
+        todosReportes.forEach(function(f) {
+            var p = f.properties || {};
             var tipo = extraerPropPorClaves(p, [
                 "Tipo de lugar afectado",
                 "tipo de lugar afectado",
@@ -268,10 +221,10 @@
             }
         });
 
-        console.log("Total de reportes únicos:", todos.length);
+        console.log("Total de reportes (features) cargados:", todosReportes.length);
 
         var html = "";
-        html += "<p class='small'><b>Total de reportes:</b> " + todos.length + "</p>";
+        html += "<p class='small'><b>Total de reportes (features):</b> " + todosReportes.length + "</p>";
 
         html += "<p class='small'><b>Por tipo de lugar</b></p><ul class='small'>";
         if (Object.keys(contTipo).length === 0) {
@@ -386,17 +339,16 @@
         var tbody = document.querySelector("#tabla-reportes tbody");
         tbody.innerHTML = "";
 
-        if (!ordenReportes.length) {
+        if (!todosReportes.length) {
             tbody.innerHTML = "<tr><td colspan='4'><em>Sin datos aún.</em></td></tr>";
             return;
         }
 
-        var todos = obtenerListaReportes();
         // Tomar hasta los últimos 10
-        var ultimos = todos.slice(-10).reverse();
+        var ultimos = todosReportes.slice(-10).reverse();
 
-        ultimos.forEach(function(p) {
-
+        ultimos.forEach(function(f) {
+            var p = f.properties || {};
             var tipo = extraerPropPorClaves(p, [
                 "Tipo de lugar afectado",
                 "tipo de lugar afectado",
@@ -434,24 +386,42 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    // Cambia el nombre del archivo si corresponde (inundaciones_kobo.geojson, inundaciones_kobo2.geojson, etc.)
-    fetch('data/inundaciones_kobo2.geojson')
+    fetch('data/inundaciones_kobo2.geojson')  // <-- ajusta el nombre si usas otro
         .then(function(resp) {
             if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
             return resp.json();
         })
         .then(function(geojson) {
-            // Si viene como [ { FeatureCollection } ]
-            if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
-                geojson = geojson[0];
+            console.log("GeoJSON bruto que llegó:", geojson);
+
+            var features = [];
+
+            // Diferentes estructuras posibles:
+            if (Array.isArray(geojson)) {
+                // Puede ser [FeatureCollection] o [Feature, Feature, ...]
+                if (geojson.length > 0 && geojson[0].type === "FeatureCollection") {
+                    features = geojson[0].features || [];
+                    geojson = geojson[0];
+                } else if (geojson.length > 0 && geojson[0].type === "Feature") {
+                    features = geojson;
+                    geojson = {
+                        type: "FeatureCollection",
+                        features: features
+                    };
+                }
+            } else if (geojson.type === "FeatureCollection") {
+                features = geojson.features || [];
+            } else if (geojson.type === "Feature") {
+                features = [geojson];
+                geojson = {
+                    type: "FeatureCollection",
+                    features: features
+                };
+            } else {
+                console.error("Estructura de GeoJSON no reconocida:", geojson);
             }
 
-            if (!geojson || !geojson.features) {
-                console.error("GeoJSON sin 'features':", geojson);
-                document.getElementById("resumen-datos").innerHTML =
-                    "<em class='small'>No se encontraron features en el GeoJSON.</em>";
-                return;
-            }
+            console.log("N° de features en el GeoJSON:", features.length);
 
             function onEachFeature(feature, layer) {
                 var p = feature.properties || {};
@@ -481,13 +451,15 @@
                 });
 
                 layer.bindPopup(html);
-                registrarFeature(feature);
             }
 
-            // Esto dibuja TODOS los features (puntos + polígonos) en el mapa
+            // Dibujar en el mapa
             L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
 
-            console.log("Datos de Kobo cargados:", geojson);
+            // Registrar TODOS los features para el análisis
+            features.forEach(function(f) { registrarFeature(f); });
+
+            console.log("Total de reportes cargados:", todosReportes.length);
             actualizarResumen();
         })
         .catch(function(err) {
