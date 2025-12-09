@@ -117,7 +117,7 @@
             Cada respuesta incluye información sobre tipo de lugar afectado, altura del
             agua, extensión del área inundada, duración, causas observadas, daños
             visibles y presencia de personas vulnerables. Estos datos se visualizan en el
-            mapa como entidades georreferenciadas y se resumen en tablas y gráficos.
+            mapa como elementos georreferenciados y se resumen en tablas y gráficos.
         </p>
 
         <hr>
@@ -126,7 +126,7 @@
         <h3>Análisis de datos</h3>
         <p class="small">
             El resumen y los gráficos se generan automáticamente a partir de los reportes
-            cargados desde KoboToolbox.
+            cargados desde KoboToolbox (solo se consideran los <b>polígonos</b>).
         </p>
 
         <div id="resumen-datos">
@@ -171,12 +171,12 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Lista con TODOS los reportes (cada feature: punto o polígono)
+    // Lista con TODOS los reportes (solo polígonos)
     var todosReportes = [];
 
     // Gráficos (Chart.js)
     var chartAltura = null;
-    var chartTipo = null;
+    var chartTipo   = null;
 
     // ============================
     // Funciones auxiliares
@@ -196,7 +196,7 @@
     }
 
     function actualizarResumen() {
-        var contTipo = {};
+        var contTipo   = {};
         var contAltura = {};
 
         todosReportes.forEach(function(f) {
@@ -221,10 +221,10 @@
             }
         });
 
-        console.log("Total de reportes (features) cargados:", todosReportes.length);
+        console.log("Total de reportes (polígonos) cargados:", todosReportes.length);
 
         var html = "";
-        html += "<p class='small'><b>Total de reportes (features):</b> " + todosReportes.length + "</p>";
+        html += "<p class='small'><b>Total de reportes (polígonos):</b> " + todosReportes.length + "</p>";
 
         html += "<p class='small'><b>Por tipo de lugar</b></p><ul class='small'>";
         if (Object.keys(contTipo).length === 0) {
@@ -254,9 +254,9 @@
     }
 
     function actualizarChartAltura(contAltura) {
-        var ctx = document.getElementById('chart-altura').getContext('2d');
+        var ctx    = document.getElementById('chart-altura').getContext('2d');
         var labels = Object.keys(contAltura);
-        var data = labels.map(function(l) { return contAltura[l]; });
+        var data   = labels.map(function(l) { return contAltura[l]; });
 
         if (!labels.length) {
             if (chartAltura) {
@@ -295,9 +295,9 @@
     }
 
     function actualizarChartTipo(contTipo) {
-        var ctx = document.getElementById('chart-tipo').getContext('2d');
+        var ctx    = document.getElementById('chart-tipo').getContext('2d');
         var labels = Object.keys(contTipo);
-        var data = labels.map(function(l) { return contTipo[l]; });
+        var data   = labels.map(function(l) { return contTipo[l]; });
 
         if (!labels.length) {
             if (chartTipo) {
@@ -386,42 +386,42 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    fetch('data/inundaciones_kobo3.geojson?=v')  // <-- ajusta el nombre si usas otro
+    fetch('data/inundaciones_kobo3.geojson')  <!-- ajusta el nombre si es otro -->
         .then(function(resp) {
             if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
             return resp.json();
         })
         .then(function(geojson) {
+
             console.log("GeoJSON bruto que llegó:", geojson);
 
-            var features = [];
-
-            // Diferentes estructuras posibles:
-            if (Array.isArray(geojson)) {
-                // Puede ser [FeatureCollection] o [Feature, Feature, ...]
-                if (geojson.length > 0 && geojson[0].type === "FeatureCollection") {
-                    features = geojson[0].features || [];
-                    geojson = geojson[0];
-                } else if (geojson.length > 0 && geojson[0].type === "Feature") {
-                    features = geojson;
-                    geojson = {
-                        type: "FeatureCollection",
-                        features: features
-                    };
-                }
-            } else if (geojson.type === "FeatureCollection") {
-                features = geojson.features || [];
-            } else if (geojson.type === "Feature") {
-                features = [geojson];
-                geojson = {
-                    type: "FeatureCollection",
-                    features: features
-                };
-            } else {
-                console.error("Estructura de GeoJSON no reconocida:", geojson);
+            // Si viene como [ { FeatureCollection } ]
+            if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
+                geojson = geojson[0];
             }
 
-            console.log("N° de features en el GeoJSON:", features.length);
+            if (!geojson || !geojson.features) {
+                console.error("GeoJSON sin 'features':", geojson);
+                document.getElementById("resumen-datos").innerHTML =
+                    "<em class='small'>No se encontraron features en el GeoJSON.</em>";
+                return;
+            }
+
+            console.log("Nº de features en el GeoJSON (todos):", geojson.features.length);
+
+            // --- FILTRAR SOLO POLÍGONOS ---
+            var polygonFeatures = geojson.features.filter(function(f) {
+                return f.geometry &&
+                       (f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon");
+            });
+
+            console.log("Nº de polígonos que se usarán:", polygonFeatures.length);
+
+            var geojsonPoligonos = {
+                type: "FeatureCollection",
+                name: geojson.name || "Kobo_filtrado",
+                features: polygonFeatures
+            };
 
             function onEachFeature(feature, layer) {
                 var p = feature.properties || {};
@@ -451,15 +451,24 @@
                 });
 
                 layer.bindPopup(html);
+                registrarFeature(feature);
             }
 
-            // Dibujar en el mapa
-            L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
+            // Estilo para polígonos
+            function estiloPoligono(feature) {
+                return {
+                    color: "#0d6efd",
+                    weight: 2,
+                    fillOpacity: 0.35
+                };
+            }
 
-            // Registrar TODOS los features para el análisis
-            features.forEach(function(f) { registrarFeature(f); });
+            L.geoJSON(geojsonPoligonos, {
+                style: estiloPoligono,
+                onEachFeature: onEachFeature
+            }).addTo(map);
 
-            console.log("Total de reportes cargados:", todosReportes.length);
+            console.log("Total de reportes (polígonos) cargados en el mapa:", polygonFeatures.length);
             actualizarResumen();
         })
         .catch(function(err) {
