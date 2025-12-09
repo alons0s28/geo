@@ -117,7 +117,7 @@
             Cada respuesta incluye información sobre tipo de lugar afectado, altura del
             agua, extensión del área inundada, duración, causas observadas, daños
             visibles y presencia de personas vulnerables. Estos datos se visualizan en el
-            mapa como entidades georreferenciadas y se resumen en tablas y gráficos.
+            mapa como polígonos georreferenciados y se resumen en tablas y gráficos.
         </p>
 
         <hr>
@@ -171,7 +171,7 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Lista con TODOS los reportes (features)
+    // Lista con TODOS los reportes (sólo polígonos)
     var todosReportes = [];
 
     // Gráficos (Chart.js)
@@ -191,7 +191,9 @@
         return null;
     }
 
+    // 🔴 Registrar solo POLÍGONOS (ignoramos los Point)
     function registrarFeature(feature) {
+        if (!feature.geometry || feature.geometry.type === "Point") return;
         todosReportes.push(feature);
     }
 
@@ -221,7 +223,7 @@
             }
         });
 
-        console.log("Total de reportes cargados:", todosReportes.length);
+        console.log("Total de reportes (polígonos) cargados:", todosReportes.length);
 
         var html = "";
         html += "<p class='small'><b>Total de reportes:</b> " + todosReportes.length + "</p>";
@@ -385,7 +387,7 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    fetch('data/inundaciones_kobo3.geojson')
+    fetch('data/inundaciones_kobo2.geojson')
         .then(function(resp) {
             if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
             return resp.json();
@@ -393,37 +395,19 @@
         .then(function(geojson) {
             console.log("GeoJSON bruto que llegó:", geojson);
 
-            // Unificar la estructura:
-            // - si es array de FeatureCollection, fusionar todas las features
-            // - si es FeatureCollection, usarlo directo
-            // - si es Feature suelta, envolver
-            var fc;
+            // Si viene como [ { FeatureCollection } ]
+            if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
+                geojson = geojson[0];
+            }
 
-            if (Array.isArray(geojson)) {
-                var allFeatures = [];
-                geojson.forEach(function(item, idx) {
-                    if (!item) return;
-                    if (item.type === "FeatureCollection" && Array.isArray(item.features)) {
-                        allFeatures = allFeatures.concat(item.features);
-                    } else if (item.type === "Feature") {
-                        allFeatures.push(item);
-                    } else {
-                        console.log("Elemento ignorado en índice", idx, item);
-                    }
-                });
-                fc = { type: "FeatureCollection", features: allFeatures };
-            } else if (geojson.type === "FeatureCollection") {
-                fc = geojson;
-            } else if (geojson.type === "Feature") {
-                fc = { type: "FeatureCollection", features: [geojson] };
-            } else {
-                console.error("Formato de GeoJSON no reconocido:", geojson);
+            if (!geojson || !geojson.features) {
+                console.error("GeoJSON sin 'features':", geojson);
                 document.getElementById("resumen-datos").innerHTML =
-                    "<em class='small'>Formato de GeoJSON no reconocido.</em>";
+                    "<em class='small'>No se encontraron features en el GeoJSON.</em>";
                 return;
             }
 
-            console.log("Nº de features en el GeoJSON fusionado:", fc.features.length);
+            console.log("N° de features en el GeoJSON:", geojson.features.length);
 
             function onEachFeature(feature, layer) {
                 var p = feature.properties || {};
@@ -446,17 +430,28 @@
                     if (valor === null || valor === "" || typeof valor === "undefined") return;
 
                     if (["Tipo de lugar afectado","tipo de lugar afectado","Tipo de lugar","tipo_lugar","tipolugar"].includes(key)) {
-                        return; // ya está en el título
+                        return;
                     }
 
                     html += "<b>" + key + ":</b> " + valor + "<br>";
                 });
 
                 layer.bindPopup(html);
-                registrarFeature(feature);
+                registrarFeature(feature);   // sólo añadirá polígonos
             }
 
-            L.geoJSON(fc, { onEachFeature: onEachFeature }).addTo(map);
+            // 🔴 Dibujar SOLO polígonos en el mapa
+            L.geoJSON(geojson, {
+                filter: function (feature) {
+                    return feature.geometry && feature.geometry.type !== "Point";
+                },
+                onEachFeature: onEachFeature,
+                style: {
+                    color: "#0057b8",
+                    weight: 2,
+                    fillOpacity: 0.4
+                }
+            }).addTo(map);
 
             console.log("Total de reportes (features) cargados:", todosReportes.length);
             actualizarResumen();
