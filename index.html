@@ -115,12 +115,38 @@
         #chart-container {
             position: relative;
             width: 100%;
-            height: 220px;
             margin-top: 8px;
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 4px;
             padding: 4px;
+        }
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin-bottom: 8px;
+        }
+
+        /* Tabla de reportes */
+        #tabla-reportes {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.75rem;
+        }
+        #tabla-reportes th,
+        #tabla-reportes td {
+            border: 1px solid #dee2e6;
+            padding: 3px 4px;
+            text-align: left;
+        }
+        #tabla-reportes th {
+            background: #e9ecef;
+            font-weight: 600;
+        }
+        #tabla-reportes tbody tr:nth-child(even) {
+            background: #f8f9fa;
         }
     </style>
 </head>
@@ -245,7 +271,7 @@
         <!-- RESUMEN Y GRÁFICOS -->
         <h3 style="font-size:1rem; margin-top:10px;">Análisis de datos</h3>
         <p class="small">
-            El resumen y el gráfico se generan automáticamente a partir de los reportes cargados en el mapa
+            El resumen y los gráficos se generan automáticamente a partir de los reportes cargados en el mapa
             (KoboToolbox + formulario demostrativo).
         </p>
 
@@ -254,8 +280,28 @@
         </div>
 
         <div id="chart-container">
-            <canvas id="chart-altura"></canvas>
+            <div class="chart-box">
+                <canvas id="chart-altura"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="chart-tipo"></canvas>
+            </div>
         </div>
+
+        <h4 style="font-size:0.9rem; margin-top:10px;">Tabla de reportes (últimos 10)</h4>
+        <table id="tabla-reportes">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tipo lugar</th>
+                    <th>Altura</th>
+                    <th>Duración</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- se rellena por JS -->
+            </tbody>
+        </table>
     </div>
 
     <div id="map"></div>
@@ -276,8 +322,9 @@
     var todosReportes = [];
     var reportes = []; // solo los locales del formulario demo
 
-    // Gráfico (Chart.js) para altura de agua
+    // Gráficos (Chart.js)
     var chartAltura = null;
+    var chartTipo = null;
 
     // Función auxiliar para leer propiedades con claves alternativas
     function extraerProp(feature, keys) {
@@ -291,12 +338,12 @@
         return null;
     }
 
-    // Registrar un feature en la lista global y actualizar resumen
+    // Registrar un feature en la lista global
     function registrarFeature(feature) {
         todosReportes.push(feature);
     }
 
-    // Actualizar resumen (tablas) + gráfico
+    // Actualizar resumen (texto), gráficos y tabla
     function actualizarResumen() {
         var contTipo = {};
         var contAltura = {};
@@ -349,6 +396,8 @@
         document.getElementById("resumen-datos").innerHTML = html;
 
         actualizarChartAltura(contAltura);
+        actualizarChartTipo(contTipo);
+        actualizarTablaReportes();
     }
 
     // Crear / actualizar gráfico de alturas
@@ -358,7 +407,6 @@
         var data = labels.map(function(l) { return contAltura[l]; });
 
         if (!labels.length) {
-            // Si no hay datos, mostrar gráfico vacío o resetear
             if (chartAltura) {
                 chartAltura.data.labels = [];
                 chartAltura.data.datasets[0].data = [];
@@ -386,7 +434,7 @@
                     maintainAspectRatio: false,
                     scales: {
                         x: {
-                            ticks: { font: { size: 10 } }
+                            ticks: { font: { size: 9 } }
                         },
                         y: {
                             beginAtZero: true,
@@ -399,6 +447,105 @@
                 }
             });
         }
+    }
+
+    // Crear / actualizar gráfico por tipo de lugar
+    function actualizarChartTipo(contTipo) {
+        var ctx = document.getElementById('chart-tipo').getContext('2d');
+        var labels = Object.keys(contTipo);
+        var data = labels.map(function(l) { return contTipo[l]; });
+
+        if (!labels.length) {
+            if (chartTipo) {
+                chartTipo.data.labels = [];
+                chartTipo.data.datasets[0].data = [];
+                chartTipo.update();
+            }
+            return;
+        }
+
+        if (chartTipo) {
+            chartTipo.data.labels = labels;
+            chartTipo.data.datasets[0].data = data;
+            chartTipo.update();
+        } else {
+            chartTipo = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'N° de reportes por tipo de lugar',
+                        data: data
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: { font: { size: 9 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    }
+
+    // Actualizar tabla de reportes (últimos 10)
+    function actualizarTablaReportes() {
+        var tbody = document.querySelector("#tabla-reportes tbody");
+        tbody.innerHTML = "";
+
+        // Tomar los últimos 10 (copiar y dar vuelta para ver los más recientes arriba)
+        var ultimos = todosReportes.slice(-10).reverse();
+
+        ultimos.forEach(function(f, idx) {
+            var tipo = extraerProp(f, [
+                "Tipo de lugar afectado",
+                "tipo de lugar afectado",
+                "Tipo de lugar",
+                "tipo_lugar",
+                "tipolugar"
+            ]) || "-";
+
+            var altura = extraerProp(f, [
+                "Altura aproximada del agua",
+                "alturaagua"
+            ]) || "-";
+
+            var duracion = extraerProp(f, [
+                "Duración aproximada de la inundación",
+                "duracion"
+            ]) || "-";
+
+            var tr = document.createElement("tr");
+
+            var tdIdx = document.createElement("td");
+            tdIdx.textContent = idx + 1;
+
+            var tdTipo = document.createElement("td");
+            tdTipo.textContent = tipo;
+
+            var tdAltura = document.createElement("td");
+            tdAltura.textContent = altura;
+
+            var tdDuracion = document.createElement("td");
+            tdDuracion.textContent = duracion;
+
+            tr.appendChild(tdIdx);
+            tr.appendChild(tdTipo);
+            tr.appendChild(tdAltura);
+            tr.appendChild(tdDuracion);
+
+            tbody.appendChild(tr);
+        });
     }
 
     // ===============================
@@ -493,7 +640,7 @@
         var comentarios  = document.getElementById('comentarios').value.trim();
 
         function getCheckedValues(name) {
-            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'))
+            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked"))
                         .map(function(el) { return el.value; });
         }
 
