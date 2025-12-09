@@ -386,7 +386,7 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    fetch('data/inundaciones_kobo2.geojson')  // <-- ajusta el nombre si usas otro
+    fetch('data/inundaciones_kobo3.geojson?=v')  // <-- ajusta el nombre si usas otro
         .then(function(resp) {
             if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
             return resp.json();
