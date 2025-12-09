@@ -23,7 +23,7 @@
             width: 100vw;
         }
         #sidebar {
-            width: 360px;
+            width: 380px;
             max-width: 100%;
             padding: 12px 14px;
             background: #f8f9fa;
@@ -32,6 +32,7 @@
         }
         #map { flex: 1; }
         h2 { margin-top: 0; font-size: 1.1rem; }
+        h3 { font-size: 1rem; margin-top: 10px; }
         .small { font-size: 0.8rem; color: #555; }
 
         form label {
@@ -112,41 +113,31 @@
             margin-top: 6px;
         }
 
-        #chart-container {
+        #tabla-resumen {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+        #tabla-resumen th,
+        #tabla-resumen td {
+            border: 1px solid #dee2e6;
+            padding: 3px 4px;
+            text-align: left;
+        }
+        #tabla-resumen th {
+            background: #e9ecef;
+        }
+
+        .chart-wrapper {
             position: relative;
             width: 100%;
+            height: 200px;
             margin-top: 8px;
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 4px;
             padding: 4px;
-        }
-        .chart-box {
-            position: relative;
-            width: 100%;
-            height: 180px;
-            margin-bottom: 8px;
-        }
-
-        /* Tabla de reportes */
-        #tabla-reportes {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-            font-size: 0.75rem;
-        }
-        #tabla-reportes th,
-        #tabla-reportes td {
-            border: 1px solid #dee2e6;
-            padding: 3px 4px;
-            text-align: left;
-        }
-        #tabla-reportes th {
-            background: #e9ecef;
-            font-weight: 600;
-        }
-        #tabla-reportes tbody tr:nth-child(even) {
-            background: #f8f9fa;
         }
     </style>
 </head>
@@ -269,7 +260,7 @@
         <hr>
 
         <!-- RESUMEN Y GRÁFICOS -->
-        <h3 style="font-size:1rem; margin-top:10px;">Análisis de datos</h3>
+        <h3>Análisis de datos</h3>
         <p class="small">
             El resumen y los gráficos se generan automáticamente a partir de los reportes cargados en el mapa
             (KoboToolbox + formulario demostrativo).
@@ -279,29 +270,26 @@
             <em class="small">Aún no hay datos cargados.</em>
         </div>
 
-        <div id="chart-container">
-            <div class="chart-box">
-                <canvas id="chart-altura"></canvas>
-            </div>
-            <div class="chart-box">
-                <canvas id="chart-tipo"></canvas>
-            </div>
-        </div>
-
-        <h4 style="font-size:0.9rem; margin-top:10px;">Tabla de reportes (últimos 10)</h4>
-        <table id="tabla-reportes">
+        <table id="tabla-resumen">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Tipo lugar</th>
-                    <th>Altura</th>
-                    <th>Duración</th>
+                    <th>Categoría</th>
+                    <th>Clase</th>
+                    <th>N° reportes</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- se rellena por JS -->
+            <tbody id="tabla-resumen-body">
+                <!-- Se llena por JS -->
             </tbody>
         </table>
+
+        <div class="chart-wrapper">
+            <canvas id="chart-altura"></canvas>
+        </div>
+
+        <div class="chart-wrapper">
+            <canvas id="chart-tipo"></canvas>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -320,13 +308,17 @@
 
     // Lista con TODOS los reportes (Kobo + locales)
     var todosReportes = [];
-    var reportes = []; // solo los locales del formulario demo
+    var reportesLocales = [];
 
     // Gráficos (Chart.js)
     var chartAltura = null;
     var chartTipo = null;
 
-    // Función auxiliar para leer propiedades con claves alternativas
+    // ============================
+    // FUNCIONES AUXILIARES
+    // ============================
+
+    // Leer una propiedad probando varias claves posibles
     function extraerProp(feature, keys) {
         var p = feature.properties || {};
         for (var i = 0; i < keys.length; i++) {
@@ -338,12 +330,12 @@
         return null;
     }
 
-    // Registrar un feature en la lista global
+    // Registrar un feature (para análisis)
     function registrarFeature(feature) {
         todosReportes.push(feature);
     }
 
-    // Actualizar resumen (texto), gráficos y tabla
+    // Actualizar resumen textual + tabla + gráficos
     function actualizarResumen() {
         var contTipo = {};
         var contAltura = {};
@@ -370,37 +362,33 @@
             }
         });
 
+        // Resumen textual
         var html = "";
         html += "<p class='small'><b>Total de reportes:</b> " + todosReportes.length + "</p>";
 
-        html += "<p class='small'><b>Por tipo de lugar</b></p><ul class='small'>";
-        if (Object.keys(contTipo).length === 0) {
-            html += "<li>Sin datos</li>";
-        } else {
-            Object.keys(contTipo).forEach(function(k) {
-                html += "<li>" + k + ": " + contTipo[k] + "</li>";
-            });
-        }
-        html += "</ul>";
-
-        html += "<p class='small'><b>Por altura del agua</b></p><ul class='small'>";
-        if (Object.keys(contAltura).length === 0) {
-            html += "<li>Sin datos</li>";
-        } else {
-            Object.keys(contAltura).forEach(function(k) {
-                html += "<li>" + k + ": " + contAltura[k] + "</li>";
-            });
-        }
-        html += "</ul>";
-
         document.getElementById("resumen-datos").innerHTML = html;
 
+        // Tabla resumen (tipo + altura)
+        var tbody = document.getElementById("tabla-resumen-body");
+        tbody.innerHTML = "";
+
+        Object.keys(contTipo).forEach(function(k) {
+            var tr = document.createElement("tr");
+            tr.innerHTML = "<td>Tipo de lugar</td><td>" + k + "</td><td>" + contTipo[k] + "</td>";
+            tbody.appendChild(tr);
+        });
+
+        Object.keys(contAltura).forEach(function(k) {
+            var tr2 = document.createElement("tr");
+            tr2.innerHTML = "<td>Altura del agua</td><td>" + k + "</td><td>" + contAltura[k] + "</td>";
+            tbody.appendChild(tr2);
+        });
+
+        // Actualizar gráficos
         actualizarChartAltura(contAltura);
         actualizarChartTipo(contTipo);
-        actualizarTablaReportes();
     }
 
-    // Crear / actualizar gráfico de alturas
     function actualizarChartAltura(contAltura) {
         var ctx = document.getElementById('chart-altura').getContext('2d');
         var labels = Object.keys(contAltura);
@@ -433,9 +421,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            ticks: { font: { size: 9 } }
-                        },
+                        x: { ticks: { font: { size: 10 } } },
                         y: {
                             beginAtZero: true,
                             ticks: { precision: 0 }
@@ -449,7 +435,6 @@
         }
     }
 
-    // Crear / actualizar gráfico por tipo de lugar
     function actualizarChartTipo(contTipo) {
         var ctx = document.getElementById('chart-tipo').getContext('2d');
         var labels = Object.keys(contTipo);
@@ -482,9 +467,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            ticks: { font: { size: 9 } }
-                        },
+                        x: { ticks: { font: { size: 9 } } },
                         y: {
                             beginAtZero: true,
                             ticks: { precision: 0 }
@@ -498,56 +481,6 @@
         }
     }
 
-    // Actualizar tabla de reportes (últimos 10)
-    function actualizarTablaReportes() {
-        var tbody = document.querySelector("#tabla-reportes tbody");
-        tbody.innerHTML = "";
-
-        // Tomar los últimos 10 (copiar y dar vuelta para ver los más recientes arriba)
-        var ultimos = todosReportes.slice(-10).reverse();
-
-        ultimos.forEach(function(f, idx) {
-            var tipo = extraerProp(f, [
-                "Tipo de lugar afectado",
-                "tipo de lugar afectado",
-                "Tipo de lugar",
-                "tipo_lugar",
-                "tipolugar"
-            ]) || "-";
-
-            var altura = extraerProp(f, [
-                "Altura aproximada del agua",
-                "alturaagua"
-            ]) || "-";
-
-            var duracion = extraerProp(f, [
-                "Duración aproximada de la inundación",
-                "duracion"
-            ]) || "-";
-
-            var tr = document.createElement("tr");
-
-            var tdIdx = document.createElement("td");
-            tdIdx.textContent = idx + 1;
-
-            var tdTipo = document.createElement("td");
-            tdTipo.textContent = tipo;
-
-            var tdAltura = document.createElement("td");
-            tdAltura.textContent = altura;
-
-            var tdDuracion = document.createElement("td");
-            tdDuracion.textContent = duracion;
-
-            tr.appendChild(tdIdx);
-            tr.appendChild(tdTipo);
-            tr.appendChild(tdAltura);
-            tr.appendChild(tdDuracion);
-
-            tbody.appendChild(tr);
-        });
-    }
-
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
@@ -557,8 +490,7 @@
             return resp.json();
         })
         .then(function(geojson) {
-
-            // Si viene envuelto en un array con un solo FeatureCollection
+            // Si viene como [ { "type":"FeatureCollection", ... } ]
             if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
                 geojson = geojson[0];
             }
@@ -567,7 +499,6 @@
                 var p = feature.properties || {};
                 var html = "";
 
-                // Título: usamos el tipo de lugar afectado si existe
                 var titulo = p["Tipo de lugar afectado"] ||
                              p["tipo de lugar afectado"] ||
                              p["Tipo de lugar"] ||
@@ -577,14 +508,12 @@
 
                 html += "<b>" + titulo + "</b><br>";
 
-                // Mostrar todas las propiedades (menos las internas que empiezan con "_")
                 Object.keys(p).forEach(function(key) {
                     if (key.startsWith("_") || key === "__version__") return;
 
                     var valor = p[key];
                     if (valor === null || valor === "" || typeof valor === "undefined") return;
 
-                    // Evitar repetir el título
                     if (key === "Tipo de lugar afectado" ||
                         key === "tipo de lugar afectado" ||
                         key === "Tipo de lugar" ||
@@ -598,15 +527,12 @@
 
                 layer.bindPopup(html);
 
-                // Registrar este feature para el resumen
                 registrarFeature(feature);
             }
 
             L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
 
             console.log("Datos de Kobo cargados:", geojson);
-
-            // Una vez cargados todos los features de Kobo, actualizamos resumen
             actualizarResumen();
         })
         .catch(function(err) {
@@ -640,7 +566,7 @@
         var comentarios  = document.getElementById('comentarios').value.trim();
 
         function getCheckedValues(name) {
-            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked"))
+            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'))
                         .map(function(el) { return el.value; });
         }
 
@@ -681,14 +607,14 @@
             }
         };
 
-        reportes.push(feature);
+        reportesLocales.push(feature);
         registrarFeature(feature);
         actualizarResumen();
 
-        console.log("Reporte agregado. GeoJSON (local) completo:");
+        console.log("Reporte agregado (local). GeoJSON:");
         console.log(JSON.stringify({
             "type": "FeatureCollection",
-            "features": reportes
+            "features": reportesLocales
         }, null, 2));
     });
 </script>
