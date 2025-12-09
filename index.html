@@ -386,28 +386,57 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    fetch('data/inundaciones_kobo2.geojson?v=3')
+    fetch('data/inundaciones_kobo2.geojson')
     .then(function(resp) {
         if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
         return resp.json();
     })
-    .then(function(geojson) {
-        console.log("GeoJSON bruto que llegó:", geojson);
+    .then(function(raw) {
 
-        // Manejar caso: [ { FeatureCollection } ]
-        if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
-            geojson = geojson[0];
+        console.log("GeoJSON bruto que llegó:", raw);
+
+        // Unificar estructura en un solo FeatureCollection
+        var geojsonFinal;
+
+        if (Array.isArray(raw)) {
+            // Caso tuyo actual: [ {FeatureCollection}, {FeatureCollection}, ... ]
+            var todasFeatures = [];
+            raw.forEach(function(item) {
+                if (item && item.type === "FeatureCollection" && Array.isArray(item.features)) {
+                    todasFeatures = todasFeatures.concat(item.features);
+                } else if (item && item.type === "Feature" && item.geometry) {
+                    todasFeatures.push(item);
+                }
+            });
+            geojsonFinal = {
+                type: "FeatureCollection",
+                features: todasFeatures
+            };
+        } else if (raw && raw.type === "FeatureCollection" && Array.isArray(raw.features)) {
+            // Caso clásico: un sólo FeatureCollection
+            geojsonFinal = raw;
+        } else if (raw && raw.type === "Feature" && raw.geometry) {
+            // Un solo Feature
+            geojsonFinal = {
+                type: "FeatureCollection",
+                features: [raw]
+            };
+        } else {
+            console.error("Estructura GeoJSON no reconocida:", raw);
+            document.getElementById("resumen-datos").innerHTML =
+                "<em class='small'>No se reconoció la estructura del GeoJSON.</em>";
+            return;
         }
 
-        if (!geojson || !geojson.features) {
-            console.error("GeoJSON sin 'features':", geojson);
+        console.log("N° de features en el GeoJSON unificado:", geojsonFinal.features.length);
+
+        if (!geojsonFinal.features.length) {
             document.getElementById("resumen-datos").innerHTML =
                 "<em class='small'>No se encontraron features en el GeoJSON.</em>";
             return;
         }
 
-        console.log("N° de features en el GeoJSON:", geojson.features.length);
-
+        // Definir cómo se muestra cada feature
         function onEachFeature(feature, layer) {
             var p = feature.properties || {};
             var html = "";
@@ -424,12 +453,11 @@
 
             Object.keys(p).forEach(function(key) {
                 if (key.startsWith("_") || key === "__version__") return;
-
                 var valor = p[key];
                 if (valor === null || valor === "" || typeof valor === "undefined") return;
 
                 if (["Tipo de lugar afectado","tipo de lugar afectado","Tipo de lugar","tipo_lugar","tipolugar"].includes(key)) {
-                    return; // ya va en el título
+                    return; // ya está en el título
                 }
 
                 html += "<b>" + key + ":</b> " + valor + "<br>";
@@ -439,9 +467,12 @@
             registrarFeature(feature);
         }
 
-        L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
+        // Agregar al mapa
+        L.geoJSON(geojsonFinal, { onEachFeature: onEachFeature }).addTo(map);
 
-        console.log("Features realmente agregados al mapa:", geojson.features.length);
+        console.log("Features realmente agregados al mapa:", geojsonFinal.features.length);
+
+        // Actualizar resúmenes, gráficos y tabla
         actualizarResumen();
     })
     .catch(function(err) {
