@@ -386,65 +386,70 @@
     // ===============================
     // CARGAR GEOJSON EXPORTADO DE KOBO
     // ===============================
-    fetch('data/inundaciones_kobo2.geojson?v=' + Date.now())
-        .then(function(resp) {
-            if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
-            return resp.json();
-        })
-        .then(function(geojson) {
-            // Si viene como [ { FeatureCollection } ]
-            if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
-                geojson = geojson[0];
-            }
+    fetch('data/inundaciones_kobo2.geojson?v=3')
+    .then(function(resp) {
+        if (!resp.ok) throw new Error("No se pudo cargar el GeoJSON de Kobo");
+        return resp.json();
+    })
+    .then(function(geojson) {
+        console.log("GeoJSON bruto que llegó:", geojson);
 
-            if (!geojson || !geojson.features) {
-                console.error("GeoJSON sin 'features':", geojson);
-                document.getElementById("resumen-datos").innerHTML =
-                    "<em class='small'>No se encontraron features en el GeoJSON.</em>";
-                return;
-            }
+        // Manejar caso: [ { FeatureCollection } ]
+        if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
+            geojson = geojson[0];
+        }
 
-            function onEachFeature(feature, layer) {
-                var p = feature.properties || {};
-                var html = "";
-
-                var titulo = extraerPropPorClaves(p, [
-                    "Tipo de lugar afectado",
-                    "tipo de lugar afectado",
-                    "Tipo de lugar",
-                    "tipo_lugar",
-                    "tipolugar"
-                ]) || "Reporte de inundación";
-
-                html += "<b>" + titulo + "</b><br>";
-
-                Object.keys(p).forEach(function(key) {
-                    if (key.startsWith("_") || key === "__version__") return;
-
-                    var valor = p[key];
-                    if (valor === null || valor === "" || typeof valor === "undefined") return;
-
-                    if (["Tipo de lugar afectado","tipo de lugar afectado","Tipo de lugar","tipo_lugar","tipolugar"].includes(key)) {
-                        return; // ya está en el título
-                    }
-
-                    html += "<b>" + key + ":</b> " + valor + "<br>";
-                });
-
-                layer.bindPopup(html);
-                registrarFeature(feature);
-            }
-
-            L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
-
-            console.log("Datos de Kobo cargados:", geojson);
-            actualizarResumen();
-        })
-        .catch(function(err) {
-            console.error("Error cargando datos de Kobo:", err);
+        if (!geojson || !geojson.features) {
+            console.error("GeoJSON sin 'features':", geojson);
             document.getElementById("resumen-datos").innerHTML =
-                "<em class='small'>Error al cargar el GeoJSON de Kobo.</em>";
-        });
+                "<em class='small'>No se encontraron features en el GeoJSON.</em>";
+            return;
+        }
+
+        console.log("N° de features en el GeoJSON:", geojson.features.length);
+
+        function onEachFeature(feature, layer) {
+            var p = feature.properties || {};
+            var html = "";
+
+            var titulo = extraerPropPorClaves(p, [
+                "Tipo de lugar afectado",
+                "tipo de lugar afectado",
+                "Tipo de lugar",
+                "tipo_lugar",
+                "tipolugar"
+            ]) || "Reporte de inundación";
+
+            html += "<b>" + titulo + "</b><br>";
+
+            Object.keys(p).forEach(function(key) {
+                if (key.startsWith("_") || key === "__version__") return;
+
+                var valor = p[key];
+                if (valor === null || valor === "" || typeof valor === "undefined") return;
+
+                if (["Tipo de lugar afectado","tipo de lugar afectado","Tipo de lugar","tipo_lugar","tipolugar"].includes(key)) {
+                    return; // ya va en el título
+                }
+
+                html += "<b>" + key + ":</b> " + valor + "<br>";
+            });
+
+            layer.bindPopup(html);
+            registrarFeature(feature);
+        }
+
+        L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
+
+        console.log("Features realmente agregados al mapa:", geojson.features.length);
+        actualizarResumen();
+    })
+    .catch(function(err) {
+        console.error("Error cargando datos de Kobo:", err);
+        document.getElementById("resumen-datos").innerHTML =
+            "<em class='small'>Error al cargar el GeoJSON de Kobo.</em>";
+    });
+
 </script>
 
 </body>
