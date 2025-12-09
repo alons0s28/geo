@@ -23,7 +23,7 @@
             width: 100vw;
         }
         #sidebar {
-            width: 380px;
+            width: 360px;
             max-width: 100%;
             padding: 12px 14px;
             background: #f8f9fa;
@@ -32,58 +32,7 @@
         }
         #map { flex: 1; }
         h2 { margin-top: 0; font-size: 1.1rem; }
-        h3 { font-size: 1rem; margin-top: 10px; }
         .small { font-size: 0.8rem; color: #555; }
-
-        form label {
-            display: block;
-            margin-top: 8px;
-            margin-bottom: 2px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        input[type="text"], select, textarea {
-            width: 100%;
-            padding: 4px 6px;
-            font-size: 0.85rem;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-        }
-        textarea { min-height: 60px; resize: vertical; }
-
-        .row-2 { display: flex; gap: 8px; }
-        .row-2 > div { flex: 1; }
-
-        .checkbox-group {
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 4px 6px;
-            background: #fff;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            font-weight: normal;
-            margin-top: 2px;
-        }
-
-        button {
-            margin-top: 10px;
-            width: 100%;
-            padding: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 4px;
-            border: none;
-            background: #0d6efd;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover { background: #0b5ed7; }
-
-        .coords-info { font-size: 0.8rem; color: #444; margin-top: 4px; }
 
         .note-box {
             background: #fff3cd;
@@ -113,26 +62,10 @@
             margin-top: 6px;
         }
 
-        #tabla-resumen {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 4px;
-        }
-        #tabla-resumen th,
-        #tabla-resumen td {
-            border: 1px solid #dee2e6;
-            padding: 3px 4px;
-            text-align: left;
-        }
-        #tabla-resumen th {
-            background: #e9ecef;
-        }
-
-        .chart-wrapper {
+        #chart-container {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 220px;
             margin-top: 8px;
             background: #ffffff;
             border: 1px solid #dee2e6;
@@ -146,149 +79,46 @@
 
 <div id="container">
     <div id="sidebar">
-        <h2>Formulario de Inundaciones</h2>
+        <h2>Catastro colaborativo de inundaciones</h2>
 
         <div class="note-box">
-            <strong>Nota:</strong> este es el <em>front end</em> de la página; se está trabajando en la conexión con base de datos en KoboToolbox.
+            <strong>Nota:</strong> este es el <em>front end</em> del WebGIS. 
+            Los datos provienen del formulario oficial implementado en KoboToolbox.
         </div>
 
-        <p class="small">Para registrar un evento real de inundación, utiliza la ficha oficial:</p>
+        <p class="small">
+            Para reportar un evento real de inundación, utiliza el siguiente formulario ciudadano 
+            (KoboToolbox), donde se registran, entre otros:
+        </p>
+        <ul class="small">
+            <li>Dirección o referencia del lugar afectado</li>
+            <li>Tipo de lugar (vivienda, calle, escuela, etc.)</li>
+            <li>Altura aproximada del agua y extensión del área inundada</li>
+            <li>Duración del evento</li>
+            <li>Causas observadas y daños visibles</li>
+            <li>Presencia de personas vulnerables</li>
+            <li>Comentarios adicionales y evidencia fotográfica</li>
+        </ul>
 
         <a href="https://ee.kobotoolbox.org/x/hXgY9AsF" target="_blank" class="btn-kobo">
             Abrir formulario en KoboToolbox
         </a>
 
-        <p class="small">
-            El formulario siguiente es demostrativo y agrega marcadores solo de forma local en este visor.
-        </p>
-
-        <!-- FORMULARIO DEMO -->
-        <form id="form-reporte">
-            <label>Coordenadas (defínelas haciendo clic en el mapa)</label>
-            <div class="row-2">
-                <div><input type="text" id="lat" name="lat" placeholder="Latitud" readonly></div>
-                <div><input type="text" id="lon" name="lon" placeholder="Longitud" readonly></div>
-            </div>
-
-            <div class="coords-info">Coordenadas generadas automáticamente al hacer clic en el mapa.</div>
-
-            <label for="direccion">Dirección o referencia</label>
-            <input type="text" id="direccion" name="direccion" placeholder="Ej: Av. Las Industrias con ...">
-
-            <label for="tipolugar">Tipo de lugar afectado</label>
-            <select id="tipolugar" name="tipolugar">
-                <option value="">Selecciona una opción</option>
-                <option value="Calle / vía pública">Calle / vía pública</option>
-                <option value="Vivienda">Vivienda</option>
-                <option value="Comercio">Comercio</option>
-                <option value="Escuela">Escuela</option>
-                <option value="Hospital">Hospital</option>
-                <option value="Plaza o parque">Plaza o parque</option>
-                <option value="Otro">Otro</option>
-            </select>
-
-            <label for="alturaagua">Altura aproximada del agua</label>
-            <select id="alturaagua" name="alturaagua">
-                <option value="">Selecciona una opción</option>
-                <option value="0–10 cm">0–10 cm (encharcamiento)</option>
-                <option value="10–30 cm">10–30 cm (cubre vereda)</option>
-                <option value="30–60 cm">30–60 cm (entra a viviendas)</option>
-                <option value="60–100 cm">60–100 cm</option>
-                <option value=">1 m">Más de 1 metro</option>
-            </select>
-
-            <label for="extension">Extensión del área inundada</label>
-            <select id="extension" name="extension">
-                <option value="">Selecciona una opción</option>
-                <option value="<10 m²">&lt; 10 m²</option>
-                <option value="10–50 m²">10–50 m²</option>
-                <option value="50–200 m²">50–200 m²</option>
-                <option value=">200 m²">&gt; 200 m²</option>
-            </select>
-
-            <label for="duracion">Duración aproximada de la inundación</label>
-            <select id="duracion" name="duracion">
-                <option value="">Selecciona una opción</option>
-                <option value="<30 min">&lt; 30 minutos</option>
-                <option value="30 min – 2 h">30 min – 2 h</option>
-                <option value="2–6 h">2–6 h</option>
-                <option value=">6 h">&gt; 6 h</option>
-            </select>
-
-            <label>Causas observadas (puedes marcar varias)</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="causas" value="Lluvia intensa">Lluvia intensa</label>
-                <label><input type="checkbox" name="causas" value="Colapso de alcantarillado">Colapso de alcantarillado</label>
-                <label><input type="checkbox" name="causas" value="Drenaje insuficiente">Drenaje insuficiente</label>
-                <label><input type="checkbox" name="causas" value="Desborde de canal o estero">Desborde de canal o estero</label>
-                <label><input type="checkbox" name="causas" value="Basura / taponamiento">Basura / taponamiento</label>
-                <label><input type="checkbox" name="causas" value="Pendiente del terreno">Pendiente del terreno</label>
-                <label><input type="checkbox" name="causas" value="No sabe">No sabe</label>
-            </div>
-
-            <label>Daños visibles (puedes marcar varias)</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="danos" value="Calles anegadas">Calles anegadas</label>
-                <label><input type="checkbox" name="danos" value="Vehículos atrapados">Vehículos atrapados</label>
-                <label><input type="checkbox" name="danos" value="Viviendas afectadas">Viviendas afectadas</label>
-                <label><input type="checkbox" name="danos" value="Comercio afectado">Comercio afectado</label>
-                <label><input type="checkbox" name="danos" value="Servicios interrumpidos">Servicios interrumpidos</label>
-                <label><input type="checkbox" name="danos" value="Interrupción del tránsito">Interrupción del tránsito</label>
-                <label><input type="checkbox" name="danos" value="Infraestructura crítica dañada">Infraestructura crítica dañada</label>
-            </div>
-
-            <label>Personas vulnerables afectadas (si corresponde)</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="vulnerables" value="Adultos mayores">Adultos mayores</label>
-                <label><input type="checkbox" name="vulnerables" value="Niños">Niños</label>
-                <label><input type="checkbox" name="vulnerables" value="Personas con discapacidad">Personas con discapacidad</label>
-                <label><input type="checkbox" name="vulnerables" value="No aplica">No aplica</label>
-                <label><input type="checkbox" name="vulnerables" value="No sabe">No sabe</label>
-            </div>
-
-            <label for="comentarios">Comentarios adicionales</label>
-            <textarea id="comentarios" name="comentarios" placeholder="Describe detalles relevantes del evento..."></textarea>
-
-            <button type="submit">Agregar al mapa</button>
-        </form>
-
-        <p class="small">
-            Los reportes también se guardan como una lista GeoJSON en la consola del navegador
-            (F12 → Console), por si quieres exportarlos.
-        </p>
-
         <hr>
 
         <!-- RESUMEN Y GRÁFICOS -->
-        <h3>Análisis de datos</h3>
+        <h3 style="font-size:1rem; margin-top:10px;">Análisis de datos</h3>
         <p class="small">
-            El resumen y los gráficos se generan automáticamente a partir de los reportes cargados en el mapa
-            (KoboToolbox + formulario demostrativo).
+            El resumen y el gráfico se generan automáticamente a partir de los reportes 
+            almacenados en KoboToolbox (GeoJSON).
         </p>
 
         <div id="resumen-datos">
             <em class="small">Aún no hay datos cargados.</em>
         </div>
 
-        <table id="tabla-resumen">
-            <thead>
-                <tr>
-                    <th>Categoría</th>
-                    <th>Clase</th>
-                    <th>N° reportes</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-resumen-body">
-                <!-- Se llena por JS -->
-            </tbody>
-        </table>
-
-        <div class="chart-wrapper">
+        <div id="chart-container">
             <canvas id="chart-altura"></canvas>
-        </div>
-
-        <div class="chart-wrapper">
-            <canvas id="chart-tipo"></canvas>
         </div>
     </div>
 
@@ -306,19 +136,11 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Lista con TODOS los reportes (Kobo + locales)
+    // Lista con TODOS los reportes (solo Kobo en esta versión)
     var todosReportes = [];
-    var reportesLocales = [];
-
-    // Gráficos (Chart.js)
     var chartAltura = null;
-    var chartTipo = null;
 
-    // ============================
-    // FUNCIONES AUXILIARES
-    // ============================
-
-    // Leer una propiedad probando varias claves posibles
+    // Función auxiliar para leer propiedades con claves alternativas
     function extraerProp(feature, keys) {
         var p = feature.properties || {};
         for (var i = 0; i < keys.length; i++) {
@@ -330,12 +152,12 @@
         return null;
     }
 
-    // Registrar un feature (para análisis)
+    // Registrar un feature en la lista global
     function registrarFeature(feature) {
         todosReportes.push(feature);
     }
 
-    // Actualizar resumen textual + tabla + gráficos
+    // Actualizar resumen (listas) + gráfico
     function actualizarResumen() {
         var contTipo = {};
         var contAltura = {};
@@ -362,33 +184,35 @@
             }
         });
 
-        // Resumen textual
         var html = "";
         html += "<p class='small'><b>Total de reportes:</b> " + todosReportes.length + "</p>";
 
+        html += "<p class='small'><b>Por tipo de lugar</b></p><ul class='small'>";
+        if (Object.keys(contTipo).length === 0) {
+            html += "<li>Sin datos</li>";
+        } else {
+            Object.keys(contTipo).forEach(function(k) {
+                html += "<li>" + k + ": " + contTipo[k] + "</li>";
+            });
+        }
+        html += "</ul>";
+
+        html += "<p class='small'><b>Por altura del agua</b></p><ul class='small'>";
+        if (Object.keys(contAltura).length === 0) {
+            html += "<li>Sin datos</li>";
+        } else {
+            Object.keys(contAltura).forEach(function(k) {
+                html += "<li>" + k + ": " + contAltura[k] + "</li>";
+            });
+        }
+        html += "</ul>";
+
         document.getElementById("resumen-datos").innerHTML = html;
 
-        // Tabla resumen (tipo + altura)
-        var tbody = document.getElementById("tabla-resumen-body");
-        tbody.innerHTML = "";
-
-        Object.keys(contTipo).forEach(function(k) {
-            var tr = document.createElement("tr");
-            tr.innerHTML = "<td>Tipo de lugar</td><td>" + k + "</td><td>" + contTipo[k] + "</td>";
-            tbody.appendChild(tr);
-        });
-
-        Object.keys(contAltura).forEach(function(k) {
-            var tr2 = document.createElement("tr");
-            tr2.innerHTML = "<td>Altura del agua</td><td>" + k + "</td><td>" + contAltura[k] + "</td>";
-            tbody.appendChild(tr2);
-        });
-
-        // Actualizar gráficos
         actualizarChartAltura(contAltura);
-        actualizarChartTipo(contTipo);
     }
 
+    // Crear / actualizar gráfico de alturas
     function actualizarChartAltura(contAltura) {
         var ctx = document.getElementById('chart-altura').getContext('2d');
         var labels = Object.keys(contAltura);
@@ -421,53 +245,9 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { ticks: { font: { size: 10 } } },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
-    }
-
-    function actualizarChartTipo(contTipo) {
-        var ctx = document.getElementById('chart-tipo').getContext('2d');
-        var labels = Object.keys(contTipo);
-        var data = labels.map(function(l) { return contTipo[l]; });
-
-        if (!labels.length) {
-            if (chartTipo) {
-                chartTipo.data.labels = [];
-                chartTipo.data.datasets[0].data = [];
-                chartTipo.update();
-            }
-            return;
-        }
-
-        if (chartTipo) {
-            chartTipo.data.labels = labels;
-            chartTipo.data.datasets[0].data = data;
-            chartTipo.update();
-        } else {
-            chartTipo = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'N° de reportes por tipo de lugar',
-                        data: data
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { font: { size: 9 } } },
+                        x: {
+                            ticks: { font: { size: 10 } }
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: { precision: 0 }
@@ -490,7 +270,8 @@
             return resp.json();
         })
         .then(function(geojson) {
-            // Si viene como [ { "type":"FeatureCollection", ... } ]
+
+            // Si viene envuelto en un array con un solo FeatureCollection (como el ejemplo que me mandaste)
             if (Array.isArray(geojson) && geojson.length > 0 && geojson[0].type === "FeatureCollection") {
                 geojson = geojson[0];
             }
@@ -499,6 +280,7 @@
                 var p = feature.properties || {};
                 var html = "";
 
+                // Título del popup
                 var titulo = p["Tipo de lugar afectado"] ||
                              p["tipo de lugar afectado"] ||
                              p["Tipo de lugar"] ||
@@ -508,12 +290,14 @@
 
                 html += "<b>" + titulo + "</b><br>";
 
+                // Mostrar todas las propiedades (menos las internas que empiezan con "_")
                 Object.keys(p).forEach(function(key) {
                     if (key.startsWith("_") || key === "__version__") return;
 
                     var valor = p[key];
                     if (valor === null || valor === "" || typeof valor === "undefined") return;
 
+                    // Evitar repetir el título
                     if (key === "Tipo de lugar afectado" ||
                         key === "tipo de lugar afectado" ||
                         key === "Tipo de lugar" ||
@@ -527,96 +311,20 @@
 
                 layer.bindPopup(html);
 
+                // Registrar este feature para el resumen/gráficos
                 registrarFeature(feature);
             }
 
             L.geoJSON(geojson, { onEachFeature: onEachFeature }).addTo(map);
 
             console.log("Datos de Kobo cargados:", geojson);
+
+            // Actualizar resumen y gráfico
             actualizarResumen();
         })
         .catch(function(err) {
             console.error("Error cargando datos de Kobo:", err);
         });
-
-    // ============================
-    // FORMULARIO DEMO LOCAL
-    // ============================
-    map.on('click', function(e) {
-        document.getElementById('lat').value = e.latlng.lat.toFixed(6);
-        document.getElementById('lon').value = e.latlng.lng.toFixed(6);
-    });
-
-    document.getElementById('form-reporte').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        var lat = parseFloat(document.getElementById('lat').value);
-        var lon = parseFloat(document.getElementById('lon').value);
-
-        if (isNaN(lat) || isNaN(lon)) {
-            alert('Primero haz clic en el mapa para definir la ubicación del reporte.');
-            return;
-        }
-
-        var direccion    = document.getElementById('direccion').value.trim();
-        var tipolugar    = document.getElementById('tipolugar').value;
-        var alturaagua   = document.getElementById('alturaagua').value;
-        var extension    = document.getElementById('extension').value;
-        var duracion     = document.getElementById('duracion').value;
-        var comentarios  = document.getElementById('comentarios').value.trim();
-
-        function getCheckedValues(name) {
-            return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'))
-                        .map(function(el) { return el.value; });
-        }
-
-        var causas       = getCheckedValues('causas');
-        var danos        = getCheckedValues('danos');
-        var vulnerables  = getCheckedValues('vulnerables');
-
-        var popupHtml = "<b>" + (tipolugar || "Reporte de inundación") + "</b><br>" +
-                        "Coordenadas: " + lat.toFixed(6) + ", " + lon.toFixed(6) + "<br>" +
-                        (direccion ? "<b>Dirección:</b> " + direccion + "<br>" : "") +
-                        "<b>Altura agua:</b> " + alturaagua + "<br>" +
-                        "<b>Extensión:</b> " + extension + "<br>" +
-                        "<b>Duración:</b> " + duracion + "<br>" +
-                        (causas.length ? "<b>Causas:</b> " + causas.join(", ") + "<br>" : "") +
-                        (danos.length ? "<b>Daños:</b> " + danos.join(", ") + "<br>" : "") +
-                        (vulnerables.length ? "<b>Vulnerables:</b> " + vulnerables.join(", ") + "<br>" : "") +
-                        (comentarios ? "<br><i>" + comentarios + "</i>" : "");
-
-        L.marker([lat, lon]).addTo(map).bindPopup(popupHtml);
-
-        var feature = {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [lon, lat]
-            },
-            "properties": {
-                "direccion": direccion,
-                "tipolugar": tipolugar,
-                "alturaagua": alturaagua,
-                "extension": extension,
-                "duracion": duracion,
-                "causas": causas,
-                "danos": danos,
-                "vulnerables": vulnerables,
-                "comentarios": comentarios,
-                "timestamp": new Date().toISOString()
-            }
-        };
-
-        reportesLocales.push(feature);
-        registrarFeature(feature);
-        actualizarResumen();
-
-        console.log("Reporte agregado (local). GeoJSON:");
-        console.log(JSON.stringify({
-            "type": "FeatureCollection",
-            "features": reportesLocales
-        }, null, 2));
-    });
 </script>
 
 </body>
